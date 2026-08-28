@@ -1,0 +1,18 @@
+InstaChat for VS Code
+=====================
+
+1. Unzip this folder.
+2. In VS Code: File → Open Folder… and select this folder (the one with package.json).
+3. Open BUILD-IN-VSCODE.md for the step-by-step code.
+4. In Terminal:
+
+   pnpm install
+   pnpm exec convex login
+   pnpm convex:dev
+
+5. Put the Convex URL into .env.local as EXPO_PUBLIC_CONVEX_URL
+6. In a second terminal:  pnpm web
+7. Browser: http://localhost:43127
+
+Demo: maya@instachat.dev  /  demo1234
+      jordan@instachat.dev /  demo1234
