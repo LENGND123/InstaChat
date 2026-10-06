@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { colors } from "@/constants/colors";
+import { readAuthError } from "@/lib/auth-error";
 import { useAuth } from "@/providers/auth-provider";
 
 export default function SignUpScreen() {
@@ -34,7 +35,7 @@ export default function SignUpScreen() {
       await signUp({ name, handle, email, password });
       router.replace("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create account");
+      setError(readAuthError(err, "Could not create account").message);
     } finally {
       setBusy(false);
     }

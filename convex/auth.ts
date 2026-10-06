@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 
 import type { Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
@@ -33,6 +33,10 @@ function normalizeHandle(handle: string): string {
   return handle.trim().replace(/^@/, "").toLowerCase();
 }
 
+function fail(code: string, message: string): never {
+  throw new ConvexError({ code, message });
+}
+
 function validateSignup(args: {
   name: string;
   handle: string;
@@ -40,16 +44,16 @@ function validateSignup(args: {
   password: string;
 }): void {
   if (args.name.trim().length < 2) {
-    throw new Error("Name must be at least 2 characters");
+    fail("invalid_name", "Name must be at least 2 characters");
   }
   if (!/^[a-z0-9._]{3,20}$/.test(args.handle)) {
-    throw new Error("Handle must be 3-20 letters, numbers, dots, or underscores");
+    fail("invalid_handle", "Handle must be 3-20 letters, numbers, dots, or underscores");
   }
-  if (!args.email.includes("@")) {
-    throw new Error("Enter a valid email address");
+  if (!args.email.includes("@") || args.email.startsWith("@") || args.email.endsWith("@")) {
+    fail("invalid_email", "Enter a valid email address");
   }
   if (args.password.length < 6) {
-    throw new Error("Password must be at least 6 characters");
+    fail("invalid_password", "Password must be at least 6 characters");
   }
 }
 
@@ -88,7 +92,7 @@ export const signUp = mutation({
       .withIndex("by_email", (q) => q.eq("email", email))
       .unique();
     if (existingEmail) {
-      throw new Error("Email already registered");
+      fail("email_taken", "That email already has an account. Sign in instead.");
     }
 
     const existingHandle = await ctx.db
@@ -96,7 +100,7 @@ export const signUp = mutation({
       .withIndex("by_handle", (q) => q.eq("handle", handle))
       .unique();
     if (existingHandle) {
-      throw new Error("Handle is already taken");
+      fail("handle_taken", "That handle is already taken. Pick another one.");
     }
 
     const salt = randomBytesHex(16);
@@ -135,12 +139,15 @@ export const signIn = mutation({
       .unique();
 
     if (!user) {
-      throw new Error("Invalid email or password");
+      fail(
+        "unknown_email",
+        "No account for this email yet. Create one with the same password.",
+      );
     }
 
     const ok = await verifyPassword(args.password, user.salt, user.passwordHash);
     if (!ok) {
-      throw new Error("Invalid email or password");
+      fail("bad_password", "Wrong password for this email.");
     }
 
     await ctx.db.patch(user._id, { lastSeen: Date.now() });
