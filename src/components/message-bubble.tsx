@@ -4,7 +4,7 @@ import { memo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { colors } from "@/constants/colors";
-import { formatClock } from "@/lib/time";
+import { formatClock, formatOpensIn } from "@/lib/time";
 
 type MessageBubbleProps = {
   mine: boolean;
@@ -12,6 +12,9 @@ type MessageBubbleProps = {
   text?: string;
   imageUrl: string | null;
   createdAt: number;
+  sealed: boolean;
+  unlockAt?: number;
+  now: number;
 };
 
 export const MessageBubble = memo(function MessageBubble({
@@ -20,32 +23,53 @@ export const MessageBubble = memo(function MessageBubble({
   text,
   imageUrl,
   createdAt,
+  sealed,
+  unlockAt,
+  now,
 }: MessageBubbleProps) {
+  const hidden = sealed && !mine;
+  const opens =
+    sealed && unlockAt !== undefined ? formatOpensIn(unlockAt, now) : null;
+
   return (
     <View style={[styles.wrap, mine ? styles.mineWrap : styles.theirsWrap]}>
       <View
         style={[
           styles.bubble,
           mine ? styles.mine : styles.theirs,
-          kind === "image" && styles.imageBubble,
+          !hidden && kind === "image" && styles.imageBubble,
+          hidden && styles.sealed,
         ]}
       >
-        {kind === "image" && imageUrl ? (
-          <Image source={{ uri: imageUrl }} style={styles.image} contentFit="cover" />
-        ) : null}
-        {kind === "image" && !imageUrl ? (
-          <View style={styles.imageFallback}>
-            <Ionicons name="image-outline" size={28} color={colors.onPrimary} />
+        {hidden ? (
+          <View style={styles.sealedRow}>
+            <Ionicons name="lock-closed" size={16} color={colors.primaryDark} />
+            <View>
+              <Text style={styles.sealedTitle}>Sealed note</Text>
+              <Text style={styles.sealedBody}>{opens ?? "Opens later"}</Text>
+            </View>
           </View>
-        ) : null}
-        {text ? (
-          <Text style={[styles.text, mine ? styles.mineText : styles.theirsText]}>
-            {text}
-          </Text>
-        ) : null}
+        ) : (
+          <>
+            {kind === "image" && imageUrl ? (
+              <Image source={{ uri: imageUrl }} style={styles.image} contentFit="cover" />
+            ) : null}
+            {kind === "image" && !imageUrl ? (
+              <View style={styles.imageFallback}>
+                <Ionicons name="image-outline" size={28} color={colors.onPrimary} />
+              </View>
+            ) : null}
+            {text ? (
+              <Text style={[styles.text, mine ? styles.mineText : styles.theirsText]}>
+                {text}
+              </Text>
+            ) : null}
+          </>
+        )}
       </View>
       <Text style={[styles.time, mine ? styles.mineTime : styles.theirsTime]}>
         {formatClock(createdAt)}
+        {mine && opens ? ` · ${opens}` : ""}
       </Text>
     </View>
   );
@@ -103,6 +127,27 @@ const styles = StyleSheet.create({
     height: 140,
     alignItems: "center",
     justifyContent: "center",
+  },
+  sealed: {
+    backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: colors.primaryContainer,
+    borderBottomLeftRadius: 6,
+  },
+  sealedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  sealedTitle: {
+    color: colors.primaryDark,
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  sealedBody: {
+    color: colors.primary,
+    fontSize: 12,
+    marginTop: 2,
   },
   time: {
     fontSize: 11,

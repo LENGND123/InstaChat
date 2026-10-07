@@ -42,6 +42,8 @@ export const messageValidator = v.object({
   imageUrl: v.union(v.string(), v.null()),
   createdAt: v.number(),
   mine: v.boolean(),
+  sealed: v.boolean(),
+  unlockAt: v.optional(v.number()),
 });
 
 export const storyGroupValidator = v.object({

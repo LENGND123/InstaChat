@@ -50,6 +50,9 @@ export default defineSchema({
     text: v.optional(v.string()),
     imageStorageId: v.optional(v.id("_storage")),
     createdAt: v.number(),
+    // Sealed notes stay hidden from the receiver until unlockAt.
+    unlockAt: v.optional(v.number()),
+    sealed: v.optional(v.boolean()),
   }).index("by_conversation", ["conversationId"]),
 
   stories: defineTable({
